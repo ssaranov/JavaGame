@@ -2,11 +2,20 @@
 import java.awt.*;
 import java.util.Random;
 import javax.swing.*;
+import javax.swing.border.Border;
 
 public class App {
 
     static int playerHealth = 100;
+	static final int PLAYER_MAX = 100;
+	static int playerAttack = 20;
+	static int playerDefense = 10;
+
     static int monsterHealth = 80;
+	static final int MONSTER_MAX_HP = 100;
+	static int mosterAttack = 15;
+	static int monsterDefense = 5;
+
 
     static boolean potionAvailable = true;
     static boolean monsterTurnRunning = false;
@@ -16,6 +25,11 @@ public class App {
 
     static JLabel playerLabel;
     static JLabel monsterLabel;
+	static JLabel PlayerStats;
+	static JLabel MonsterStats;
+	static JLabel InventoryLabel;
+	static JLabel LevelLabel;
+
     static JProgressBar playerBar;
     static JProgressBar monsterBar;
     static JTextArea log;
@@ -31,20 +45,59 @@ public class App {
         SwingUtilities.invokeLater(() -> {
 
             JFrame window = new JFrame("Битва с монстром");
-            window.setSize(700, 650);
+            window.setSize(800, 720);
             window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             window.setLayout(new BorderLayout(8, 8));
+			window.setMinimumSize(new GridLayout(4, 1, 5, 5));
+			window.setLayout(new BorderLayout(8,8));
 
-            JPanel status = new JPanel(new GridLayout(4, 1, 5, 5));
+            JPanel status = new JPanel(new GridLayout(1,2,15,0));
+			status.setBorder(
+				BorderFactory.createEmptyBorder(1,2,15,0)
+			);
+			JPanel playerPanel = new JPanel(new GridLayout(4,1,3,3));
+			playerPanel = setborder(
+				BorderFactory.createTitledBorder("Герой")
+			);
 
-            playerLabel = new JLabel("Герой: 100 HP");
-            monsterLabel = new JLabel("Монстр: 80 HP");
+            playerLabel = new JLabel();
+            monsterLabel = new JLabel();
 
-            playerBar = new JProgressBar(0, 100);
+            playerBar = new JProgressBar(0, PLAYER_MAX_HP);
             playerBar.setValue(100);
             playerBar.setStringPainted(true);
             playerBar.setForeground(Color.GREEN);
 
+			playerPanel.add(playerLabel);
+			playerPanel.add(playerBar);
+			playerPanel.add(PlayerStats);
+			playerPanel.add(new JLabel(""));
+
+			JPanel monsterPanel = new JPanel(new GridLayout(4,1,3,3));
+			monsterPanel.setBorder(
+				BorderFactory.createTitledBorder("Монстр")
+			);
+
+
+			monsterLabel = new JLabel();
+			MonsterStats = new JLabel();
+
+
+			monsterBar = new JProgressBar(0,MONSTER_MAX_HP);
+			monsterBar.setStringPainted(true);
+			monsterBar.setForeground(new Color(220,55,55));
+			
+			
+
+			monsterPanel.add(monsterLabel);
+			monsterPanel.add(monsterBar);
+			monsterPanel.add(MonsterStats);
+			playerPanel.add(new JLabel(""));
+
+			status.add(playerPanel);
+			status.add(monsterPanel);
+
+			
             monsterBar = new JProgressBar(0, 80);
             monsterBar.setValue(80);
             monsterBar.setStringPainted(true);
@@ -61,14 +114,27 @@ public class App {
 
             battlefield = new BattleField();
 
-            log = new JTextArea();
+            log = new JTextArea(4,30);
             log.setEditable(false);
             log.setLineWrap(true);
             log.setWrapStyleWord(true);
-            log.append("Ты встретил монстра!\n");
+			log.setFont(new Font("SansSerif", Font.PLAIN,13));
+            log.append("Ты встретил  1-го монстра!\n");
             log.append("Начинай бой!\n\n");
 
             JScrollPane scroll = new JScrollPane(log);
+
+
+			JPanel inventoryPanel = new JPanel(new BorderLayout());
+			inventoryPanel.setBorder(
+				BorderFactory.createTitledBorder("Инвентарь")
+			);
+			InventoryLabel = new JLabel();
+			InventoryLabel.setBorder(
+				BorderFactory.createEmptyBorder(5,8,5,8)
+			);
+			inventoryPanel.add(InventoryLabel,BorderLayout.CENTER);
+			informationPanel.add(scroll,BorderLayout.SOUTH);
 
             attackButton = new JButton("Атаковать");
             potionButton = new JButton("Выпить зелье");
@@ -81,6 +147,13 @@ public class App {
             buttons.add(potionButton);
             buttons.add(restartButton);
 
+
+			JPanel bottom = new JPanel(new BorderLayout(5,5));
+			bottom.add(informationPanel,BorderLayout.CENTER);
+			bottom.add(buttons,BorderLayout.SOUTH);
+			bottom.add(buttons,Border.SOUTH);
+
+			bottom.setPreferredSize(new Dimension());
             attackButton.addActionListener(e -> attack());
             potionButton.addActionListener(e -> usePotion());
             restartButton.addActionListener(e -> restartGame());
@@ -90,9 +163,12 @@ public class App {
             bottom.add(buttons, BorderLayout.SOUTH);
             bottom.setPreferredSize(new Dimension(650, 230));
 
+
+
             window.add(status, BorderLayout.NORTH);
             window.add(battlefield, BorderLayout.CENTER);
             window.add(bottom, BorderLayout.SOUTH);
+			updateLabels();
 
             window.setLocationRelativeTo(null);
             window.setVisible(true);
@@ -107,6 +183,9 @@ public class App {
 
         int damage = random.nextInt(15) + 5;
         monsterHealth -= damage;
+
+
+		monsterHealth = Math.max(0,monsterHealth - damage);
 
         if (monsterHealth < 0) {
             monsterHealth = 0;
